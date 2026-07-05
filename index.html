@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Nairobi Dishes — Expense Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --yellow:#FFC244;--green:#00A082;--dark:#1A1A1A;
+  --mid:#555;--light:#F5F5F5;--white:#fff;
+  --red:#E74C3C;--border:#E8E8E8;--blue:#0000FF;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--light);color:var(--dark);-webkit-font-smoothing:antialiased;}
+
+header{background:var(--yellow);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,0.12);}
+.header-left h1{font-size:1rem;font-weight:800;margin:0;}
+.header-left p{font-size:0.68rem;opacity:0.7;margin-top:1px;}
+.today-badge{background:var(--dark);color:var(--yellow);font-size:0.72rem;font-weight:700;padding:6px 12px;border-radius:20px;}
+
+.tabs{display:flex;background:var(--white);border-bottom:2px solid var(--border);position:sticky;top:57px;z-index:90;}
+.tab{flex:1;padding:12px 8px;text-align:center;font-size:0.8rem;font-weight:700;color:var(--mid);cursor:pointer;border-bottom:3px solid transparent;transition:all 0.15s;}
+.tab.active{color:var(--green);border-bottom-color:var(--green);}
+
+.container{padding:14px;max-width:520px;margin:0 auto;padding-bottom:60px;}
+
+.sec-label{font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:var(--mid);margin:16px 0 8px;}
+
+.date-input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:0.9rem;font-family:inherit;outline:none;transition:border-color 0.18s;margin-bottom:4px;}
+.date-input:focus{border-color:var(--green);}
+
+.expense-group{background:var(--white);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);margin-bottom:12px;}
+.group-header{padding:8px 14px;display:flex;align-items:center;gap:8px;}
+.group-header.green{background:var(--green);}
+.group-header.dark{background:var(--dark);}
+.group-header.yellow{background:var(--yellow);}
+.group-header.orange{background:#E07B00;}
+.group-title{font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;}
+.group-title.dark-text{color:var(--dark);}
+.group-title.white-text{color:white;}
+.group-icon{font-size:1rem;}
+
+.col-headers{display:grid;gap:6px;padding:0 0 2px;}
+.col-headers.daily-cols{grid-template-columns:1fr 80px 80px 80px;}
+.col-header{font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--mid);text-align:right;padding:4px 12px 0;}
+
+.expense-row{display:grid;gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);}
+.expense-row:last-child{border-bottom:none;}
+.expense-row.daily-cols{grid-template-columns:1fr 80px 80px 80px;}
+.expense-name{font-size:0.8rem;font-weight:600;color:var(--dark);}
+.expense-name small{display:block;font-size:0.65rem;color:var(--mid);font-weight:400;}
+.exp-input{padding:7px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:0.82rem;font-family:inherit;outline:none;text-align:right;width:100%;transition:border-color 0.18s;color:var(--blue);font-weight:600;}
+.exp-input:focus{border-color:var(--green);}
+.row-total{font-size:0.8rem;font-weight:700;color:var(--dark);text-align:right;}
+
+/* MEALS SECTION */
+.meal-row{display:grid;grid-template-columns:1fr 70px 70px 80px 80px;gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);}
+.meal-row:last-child{border-bottom:none;}
+.meal-row.header{padding:4px 12px 2px;}
+.meal-col-header{font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--mid);text-align:right;}
+
+/* STANDARD PRICE ROW */
+.std-row{display:grid;grid-template-columns:1fr 120px;gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);}
+.std-row:last-child{border-bottom:none;}
+
+/* DELIVERY STANDARD */
+.delivery-std{padding:10px 12px;background:#fafafa;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.delivery-std label{font-size:0.78rem;font-weight:600;flex:1;}
+.delivery-std .exp-input{width:100px;}
+
+/* SUMMARY CARD */
+.summary-card{background:var(--dark);border-radius:14px;padding:16px;margin-top:14px;}
+.summary-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.08);}
+.summary-row:last-child{border-bottom:none;}
+.summary-row.total{padding-top:10px;margin-top:4px;border-top:1px solid rgba(255,255,255,0.2);}
+.sum-label{font-size:0.78rem;color:#aaa;}
+.sum-val{font-size:0.78rem;color:white;font-weight:700;}
+.summary-row.total .sum-label{font-size:0.9rem;color:white;font-weight:800;}
+.summary-row.total .sum-val{font-size:1.1rem;color:var(--yellow);font-weight:800;}
+
+.wa-btn{width:100%;background:#25D366;color:white;border:none;padding:14px;border-radius:12px;font-size:0.95rem;font-weight:800;cursor:pointer;margin-top:10px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity 0.15s;}
+.wa-btn:active{opacity:0.85;}
+
+/* ADD MEAL BTN */
+.add-meal-btn{width:100%;padding:10px;background:var(--light);border:1.5px dashed var(--border);border-radius:10px;font-size:0.82rem;font-weight:700;color:var(--green);cursor:pointer;font-family:inherit;margin-top:6px;transition:background 0.15s;}
+.add-meal-btn:active{background:var(--border);}
+
+/* BULK TAB */
+.bulk-group{background:var(--white);border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);margin-bottom:12px;}
+.bulk-row{display:grid;grid-template-columns:1fr 90px 90px 80px;gap:6px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--border);}
+.bulk-row:last-child{border-bottom:none;}
+.bulk-note{font-size:0.7rem;color:var(--mid);font-style:italic;padding:6px 12px 8px;background:#fafafa;border-bottom:1px solid var(--border);}
+
+.save-bulk-btn{width:100%;background:var(--dark);color:white;border:none;padding:14px;border-radius:12px;font-size:0.9rem;font-weight:700;cursor:pointer;margin-top:10px;font-family:inherit;transition:opacity 0.15s;}
+.save-bulk-btn:active{opacity:0.85;}
+.bulk-saved-info{background:#E8F8F5;border-radius:10px;padding:10px 14px;font-size:0.78rem;color:#005C49;margin-top:8px;display:none;}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--dark);color:white;padding:10px 20px;border-radius:20px;font-size:0.82rem;font-weight:600;z-index:999;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+
+textarea.exp-textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:0.85rem;font-family:inherit;outline:none;resize:vertical;min-height:56px;margin-bottom:2px;}
+textarea.exp-textarea:focus{border-color:var(--green);}
+
+.remove-meal-btn{background:none;border:none;color:var(--red);font-size:1.1rem;cursor:pointer;padding:2px 4px;line-height:1;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>🍱 Expense Tracker</h1>
+    <p>Nairobi Dishes</p>
+  </div>
+  <div class="today-badge" id="today-badge">—</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('daily')">📝 Daily Entry</div>
+  <div class="tab" onclick="switchTab('bulk')">📦 Bulk Items</div>
+</div>
+
+<!-- ══════════════ DAILY TAB ══════════════ -->
+<div id="tab-daily" class="container">
+
+  <div class="sec-label">Date</div>
+  <input type="date" id="entry-date" class="date-input">
+
+  <!-- STAFF & TRANSPORT -->
+  <div class="sec-label">Staff & Transport</div>
+  <div class="col-headers daily-cols">
+    <div></div>
+    <div class="col-header">Qty</div>
+    <div class="col-header">Unit Price</div>
+    <div class="col-header">Total</div>
+  </div>
+
+  <div class="expense-group">
+    <div class="group-header green">
+      <span class="group-icon">👩‍🍳</span>
+      <span class="group-title white-text">Staff & Transport</span>
+    </div>
+
+    <!-- Cook 1 -->
+    <div class="expense-row daily-cols">
+      <div class="expense-name">Cook 1<small>Daily wage</small></div>
+      <input class="exp-input" type="number" value="1" id="qty_cook1" oninput="calcRow('cook1')">
+      <input class="exp-input" type="number" placeholder="0" id="price_cook1" oninput="calcRow('cook1')">
+      <div class="row-total" id="total_cook1">—</div>
+    </div>
+
+    <!-- Transport -->
+    <div class="expense-row daily-cols">
+      <div class="expense-name">Transport<small>Hotel → CBD</small></div>
+      <input class="exp-input" type="number" value="1" id="qty_transport" oninput="calcRow('transport')">
+      <input class="exp-input" type="number" placeholder="0" id="price_transport" oninput="calcRow('transport')">
+      <div class="row-total" id="total_transport">—</div>
+    </div>
+
+
+  </div>
+
+  <!-- INGREDIENTS -->
+  <div class="sec-label">Ingredients</div>
+  <div class="col-headers" style="grid-template-columns:1fr 120px 80px;display:grid;gap:6px;margin-bottom:4px;">
+    <div></div>
+    <div class="col-header">Amount (KES)</div>
+    <div class="col-header">Total</div>
+  </div>
+  <div class="expense-group">
+    <div class="group-header orange">
+      <span class="group-icon">🥩</span>
+      <span class="group-title white-text">Ingredients</span>
+    </div>
+    <div class="expense-row" style="grid-template-columns:1fr 120px 80px;">
+      <div class="expense-name">Meat<small>total amount spent</small></div>
+      <input class="exp-input" type="number" placeholder="KES amount" id="price_meat" oninput="calcSimple('meat')">
+      <div class="row-total" id="total_meat">—</div>
+    </div>
+    <div class="expense-row" style="grid-template-columns:1fr 60px 70px 80px;">
+      <div class="expense-name">Rice<small>kg</small></div>
+      <input class="exp-input" type="number" placeholder="kg" id="qty_rice" oninput="calcRow('rice')">
+      <input class="exp-input" type="number" placeholder="per kg" id="price_rice" oninput="calcRow('rice')">
+      <div class="row-total" id="total_rice">—</div>
+    </div>
+    <div class="expense-row" style="grid-template-columns:1fr 60px 70px 80px;">
+      <div class="expense-name">Cabbage<small>heads</small></div>
+      <input class="exp-input" type="number" placeholder="qty" id="qty_cabbage" oninput="calcRow('cabbage')">
+      <input class="exp-input" type="number" placeholder="per head" id="price_cabbage" oninput="calcRow('cabbage')">
+      <div class="row-total" id="total_cabbage">—</div>
+    </div>
+    <div class="expense-row" style="grid-template-columns:1fr 120px 80px;">
+      <div class="expense-name">Groceries<small>total amount spent</small></div>
+      <input class="exp-input" type="number" placeholder="KES amount" id="price_veg" oninput="calcSimple('veg')">
+      <div class="row-total" id="total_veg">—</div>
+    </div>
+    <div class="expense-row" style="grid-template-columns:1fr 120px 80px;">
+      <div class="expense-name">Disposable Dishes<small>auto = total packed meals</small></div>
+      <input class="exp-input" type="number" placeholder="cost per dish" id="price_dishes" oninput="calcSimple('dishes')">
+      <div class="row-total" id="total_dishes">—</div>
+    </div>
+  </div>
+
+  <!-- COOKED MEALS -->
+  <div class="sec-label">Cooked Meals — Packed vs Ordered</div>
+  <div class="expense-group">
+    <div class="group-header yellow">
+      <span class="group-icon">🍱</span>
+      <span class="group-title dark-text">Meals Summary</span>
+    </div>
+
+    <!-- Column headers -->
+    <div class="meal-row header">
+      <div class="meal-col-header" style="text-align:left;">Meal</div>
+      <div class="meal-col-header">Price</div>
+      <div class="meal-col-header">Packed</div>
+      <div class="meal-col-header">Ordered</div>
+      <div class="meal-col-header">Revenue</div>
+    </div>
+
+    <div id="meals-rows">
+      <!-- Rendered by JS -->
+    </div>
+
+    <div style="padding:8px 12px;">
+      <button class="add-meal-btn" onclick="addCustomMeal()">+ Add another meal</button>
+    </div>
+
+    <!-- Totals -->
+    <div style="padding:8px 12px 12px;border-top:1px solid var(--border);display:grid;grid-template-columns:1fr 80px 80px 80px 80px;gap:6px;">
+      <div style="font-size:0.78rem;font-weight:700;">TOTALS</div>
+      <div></div>
+      <div class="row-total" id="meal-total-packed">—</div>
+      <div class="row-total" id="meal-total-ordered">—</div>
+      <div class="row-total" id="meal-total-revenue" style="color:var(--green);">—</div>
+    </div>
+  </div>
+
+  <!-- NOTES -->
+  <div class="sec-label">Notes (optional)</div>
+  <textarea id="entry-notes" class="exp-textarea" placeholder="Any notes for today…"></textarea>
+
+  <!-- SUMMARY -->
+  <div class="summary-card" id="daily-summary-card">
+    <div class="summary-row"><span class="sum-label">Cook</span><span class="sum-val" id="sum-staff">—</span></div>
+    <div class="summary-row"><span class="sum-label">Transport</span><span class="sum-val" id="sum-transport">—</span></div>
+    <div class="summary-row"><span class="sum-label">Ingredients</span><span class="sum-val" id="sum-ingredients">—</span></div>
+    <div class="summary-row"><span class="sum-label">Meals Packed</span><span class="sum-val" id="sum-packed">—</span></div>
+    <div class="summary-row"><span class="sum-label">Meals Ordered</span><span class="sum-val" id="sum-ordered">—</span></div>
+    <div class="summary-row"><span class="sum-label">Revenue</span><span class="sum-val" style="color:var(--yellow)" id="sum-revenue">—</span></div>
+    <div class="summary-row total">
+      <span class="sum-label">Total Expenses</span>
+      <span class="sum-val" id="sum-total">KES 0</span>
+    </div>
+  </div>
+
+  <button class="wa-btn" onclick="sendToWhatsApp()">
+    📲 Send Summary to WhatsApp
+  </button>
+
+</div>
+
+<!-- ══════════════ BULK TAB ══════════════ -->
+<div id="tab-bulk" class="container" style="display:none;">
+
+  <div style="background:#E8F8F5;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:0.78rem;color:#005C49;line-height:1.5;">
+    <strong style="display:block;margin-bottom:3px;">📦 Bulk Items</strong>
+    Enter quantities and prices when you purchase in bulk. These are saved separately and can be referenced for daily cost estimates.
+  </div>
+
+  <div class="sec-label">Last Updated: <span id="bulk-last-updated" style="text-transform:none;letter-spacing:0;">Never</span></div>
+
+  <div class="col-headers" style="grid-template-columns:1fr 90px 90px 80px;display:grid;gap:6px;margin-bottom:4px;">
+    <div></div>
+    <div class="col-header">Qty / Unit</div>
+    <div class="col-header">Total Paid</div>
+    <div class="col-header">Per Unit</div>
+  </div>
+
+  <div class="bulk-group">
+    <div class="group-header dark">
+      <span class="group-icon">📦</span>
+      <span class="group-title white-text">Bulk Purchases</span>
+    </div>
+    <div class="bulk-note">Enter total quantity bought and total amount paid. Cost per unit is calculated automatically.</div>
+
+    <div class="bulk-row">
+      <div class="expense-name">Oil<small>litres</small></div>
+      <input class="exp-input" type="number" placeholder="litres" id="bulk_qty_oil" oninput="calcBulkUnit('oil')">
+      <input class="exp-input" type="number" placeholder="KES paid" id="bulk_paid_oil" oninput="calcBulkUnit('oil')">
+      <div class="row-total" id="bulk_unit_oil">—</div>
+    </div>
+    <div class="bulk-row">
+      <div class="expense-name">Gas<small>kg / refill</small></div>
+      <input class="exp-input" type="number" placeholder="kg" id="bulk_qty_gas" oninput="calcBulkUnit('gas')">
+      <input class="exp-input" type="number" placeholder="KES paid" id="bulk_paid_gas" oninput="calcBulkUnit('gas')">
+      <div class="row-total" id="bulk_unit_gas">—</div>
+    </div>
+    <div class="bulk-row">
+      <div class="expense-name">Foil<small>metres / roll</small></div>
+      <input class="exp-input" type="number" placeholder="metres" id="bulk_qty_foil" oninput="calcBulkUnit('foil')">
+      <input class="exp-input" type="number" placeholder="KES paid" id="bulk_paid_foil" oninput="calcBulkUnit('foil')">
+      <div class="row-total" id="bulk_unit_foil">—</div>
+    </div>
+    <div class="bulk-row">
+      <div class="expense-name">Cling Film<small>metres / roll</small></div>
+      <input class="exp-input" type="number" placeholder="metres" id="bulk_qty_cling" oninput="calcBulkUnit('cling')">
+      <input class="exp-input" type="number" placeholder="KES paid" id="bulk_paid_cling" oninput="calcBulkUnit('cling')">
+      <div class="row-total" id="bulk_unit_cling">—</div>
+    </div>
+    <div class="bulk-row">
+      <div class="expense-name">Disposable Dishes<small>pieces / pack</small></div>
+      <input class="exp-input" type="number" placeholder="qty" id="bulk_qty_dishes" oninput="calcBulkUnit('dishes')">
+      <input class="exp-input" type="number" placeholder="KES paid" id="bulk_paid_dishes" oninput="calcBulkUnit('dishes')">
+      <div class="row-total" id="bulk_unit_dishes">—</div>
+    </div>
+    <div class="bulk-row">
+      <div class="expense-name">Other<small>specify in notes</small></div>
+      <input class="exp-input" type="number" placeholder="qty" id="bulk_qty_other" oninput="calcBulkUnit('other')">
+      <input class="exp-input" type="number" placeholder="KES paid" id="bulk_paid_other" oninput="calcBulkUnit('other')">
+      <div class="row-total" id="bulk_unit_other">—</div>
+    </div>
+  </div>
+
+  <div class="sec-label">Notes</div>
+  <textarea id="bulk-notes" class="exp-textarea" placeholder="e.g. bought 5L oil at Naivas…"></textarea>
+
+  <button class="save-bulk-btn" onclick="saveBulk()">💾 Save Bulk Items</button>
+
+  <div class="bulk-saved-info" id="bulk-saved-info"></div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const WA_NUMBER = "254714243150";
+
+// ── DEFAULT MEALS ──
+const DEFAULT_MEALS = [
+  { name: "Beef Pilau",       price: 150 },
+  { name: "Chapo Cereals",    price: 120 },
+  { name: "Rice (S)",         price: 100 },
+  { name: "Rice Cereals",     price: 150 },
+  { name: "Mashed Potatoes",  price: 150 },
+];
+
+let customMeals = []; // extra user-added meals
+
+// ── INIT ──
+window.onload = () => {
+  const today = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+  document.getElementById('entry-date').value = fmt;
+  document.getElementById('today-badge').innerText = fmt;
+  renderMeals();
+  loadBulk();
+};
+
+// ── TABS ──
+function switchTab(t) {
+  ['daily','bulk'].forEach(id => {
+    document.getElementById(`tab-${id}`).style.display = t===id ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    el.classList.toggle('active', (i===0&&t==='daily')||(i===1&&t==='bulk'));
+  });
+}
+
+// ── ROW CALC ──
+function calcRow(key) {
+  const qty   = parseFloat(document.getElementById(`qty_${key}`)?.value)   || 0;
+  const price = parseFloat(document.getElementById(`price_${key}`)?.value) || 0;
+  const total = qty * price;
+  const el = document.getElementById(`total_${key}`);
+  if (el) el.innerText = total > 0 ? `KES ${total.toLocaleString()}` : '—';
+  updateSummary();
+}
+
+// ── SIMPLE (amount only, no qty) ──
+function calcSimple(key) {
+  const amount = parseFloat(document.getElementById(`price_${key}`)?.value) || 0;
+  const el = document.getElementById(`total_${key}`);
+  if (el) el.innerText = amount > 0 ? `KES ${amount.toLocaleString()}` : '—';
+  if (key === 'dishes') {
+    // dishes just shows cost — qty comes from packed total in calcMeals
+  }
+  updateSummary();
+}
+
+// ── MEALS ──
+function allMeals() {
+  return [...DEFAULT_MEALS, ...customMeals];
+}
+
+function renderMeals() {
+  const container = document.getElementById('meals-rows');
+  container.innerHTML = allMeals().map((m, i) => `
+    <div class="meal-row" id="meal-row-${i}">
+      <div class="expense-name" style="display:flex;align-items:center;gap:4px;">
+        ${m.isCustom ? `<button class="remove-meal-btn" onclick="removeCustomMeal(${i})">×</button>` : ''}
+        ${m.name}
+      </div>
+      <div style="text-align:right;font-size:0.78rem;font-weight:700;color:var(--green);">KES ${m.price}</div>
+      <input class="exp-input" type="number" placeholder="0" id="packed_${i}" oninput="calcMeals()" min="0">
+      <input class="exp-input" type="number" placeholder="0" id="ordered_${i}" oninput="calcMeals()" min="0">
+      <div class="row-total" id="rev_${i}">—</div>
+    </div>
+  `).join('');
+  calcMeals();
+}
+
+function calcMeals() {
+  const meals = allMeals();
+  let totalPacked = 0, totalOrdered = 0, totalRev = 0;
+  meals.forEach((m, i) => {
+    const packedEl  = document.getElementById(`packed_${i}`);
+    const orderedEl = document.getElementById(`ordered_${i}`);
+    const packed  = parseInt(packedEl?.value)  || 0;
+    let   ordered = parseInt(orderedEl?.value) || 0;
+
+    // Enforce ordered <= packed
+    if (ordered > packed && packed > 0) {
+      ordered = packed;
+      if (orderedEl) orderedEl.value = packed;
+    }
+    if (packed === 0 && ordered > 0) {
+      ordered = 0;
+      if (orderedEl) orderedEl.value = 0;
+    }
+
+    const rev = ordered * m.price;
+    totalPacked  += packed;
+    totalOrdered += ordered;
+    totalRev     += rev;
+    const el = document.getElementById(`rev_${i}`);
+    if (el) el.innerText = rev > 0 ? `KES ${rev.toLocaleString()}` : '—';
+  });
+
+  document.getElementById('meal-total-packed').innerText  = totalPacked  > 0 ? totalPacked  : '—';
+  document.getElementById('meal-total-ordered').innerText = totalOrdered > 0 ? totalOrdered : '—';
+  document.getElementById('meal-total-revenue').innerText = totalRev > 0 ? `KES ${totalRev.toLocaleString()}` : '—';
+
+  // Auto-calc disposable dishes total = totalPacked × cost per dish
+  const dishCost = parseFloat(document.getElementById('price_dishes')?.value) || 0;
+  const dishTotal = totalPacked * dishCost;
+  const dishEl = document.getElementById('total_dishes');
+  if (dishEl) dishEl.innerText = dishTotal > 0 ? `KES ${dishTotal.toLocaleString()}` : '—';
+
+  updateSummary();
+}
+
+function addCustomMeal() {
+  const name  = prompt('Meal name:');
+  if (!name) return;
+  const price = parseFloat(prompt(`Price for "${name}" (KES):`));
+  if (isNaN(price) || price <= 0) { showToast('Invalid price'); return; }
+  customMeals.push({ name, price, isCustom: true });
+  renderMeals();
+}
+
+function removeCustomMeal(index) {
+  const meals = allMeals();
+  const meal = meals[index];
+  if (!meal.isCustom) return;
+  customMeals = customMeals.filter(m => m !== meal);
+  renderMeals();
+}
+
+// ── SUMMARY ──
+function getVal(key) {
+  const qty   = parseFloat(document.getElementById(`qty_${key}`)?.value)   || 0;
+  const price = parseFloat(document.getElementById(`price_${key}`)?.value) || 0;
+  return qty * price;
+}
+
+function getSimple(key) {
+  return parseFloat(document.getElementById(`price_${key}`)?.value) || 0;
+}
+
+function getDishesTotal() {
+  const meals = allMeals();
+  let totalPacked = 0;
+  meals.forEach((m,i) => { totalPacked += parseInt(document.getElementById(`packed_${i}`)?.value) || 0; });
+  const dishCost = parseFloat(document.getElementById('price_dishes')?.value) || 0;
+  return totalPacked * dishCost;
+}
+
+function updateSummary() {
+  const staff       = getVal('cook1');
+  const transport   = getVal('transport');
+  const ingredients = getSimple('meat') + getVal('rice') + getVal('cabbage') + getSimple('veg') + getDishesTotal();
+
+  const meals = allMeals();
+  let totalPacked = 0, totalOrdered = 0, totalRev = 0;
+  meals.forEach((m, i) => {
+    totalPacked  += parseInt(document.getElementById(`packed_${i}`)?.value)  || 0;
+    totalOrdered += parseInt(document.getElementById(`ordered_${i}`)?.value) || 0;
+    totalRev     += (parseInt(document.getElementById(`ordered_${i}`)?.value) || 0) * m.price;
+  });
+
+  const totalExp = staff + transport + ingredients;
+
+  const fmt = n => n > 0 ? `KES ${n.toLocaleString()}` : '—';
+  document.getElementById('sum-staff').innerText       = fmt(staff);
+  document.getElementById('sum-transport').innerText   = fmt(transport);
+  document.getElementById('sum-ingredients').innerText = fmt(ingredients);
+  document.getElementById('sum-packed').innerText      = totalPacked  > 0 ? `${totalPacked} meals`  : '—';
+  document.getElementById('sum-ordered').innerText     = totalOrdered > 0 ? `${totalOrdered} meals` : '—';
+  document.getElementById('sum-revenue').innerText     = fmt(totalRev);
+  document.getElementById('sum-total').innerText       = `KES ${totalExp.toLocaleString()}`;
+}
+
+// ── WHATSAPP ──
+function sendToWhatsApp() {
+  const date       = document.getElementById('entry-date').value || 'N/A';
+  const notes      = document.getElementById('entry-notes').value.trim();
+  const staff       = getVal('cook1');
+  const transport   = getVal('transport');
+  const ingredients = getSimple('meat') + getVal('rice') + getVal('cabbage') + getSimple('veg') + getDishesTotal();
+
+  const c1    = getVal('cook1');
+  const trans = getVal('transport');
+  const meat  = getSimple('meat'), rice = getVal('rice');
+  const cab   = getVal('cabbage'), veg = getSimple('veg'), dishes = getDishesTotal();
+
+  const meals = allMeals();
+  let mealLines = '', totalPacked = 0, totalOrdered = 0, totalRev = 0;
+  meals.forEach((m, i) => {
+    const packed  = parseInt(document.getElementById(`packed_${i}`)?.value)  || 0;
+    const ordered = parseInt(document.getElementById(`ordered_${i}`)?.value) || 0;
+    const rev     = ordered * m.price;
+    if (packed > 0 || ordered > 0) {
+      mealLines += `  • ${m.name} (KES ${m.price}): ${packed} packed, ${ordered} ordered → KES ${rev.toLocaleString()}\n`;
+    }
+    totalPacked  += packed;
+    totalOrdered += ordered;
+    totalRev     += rev;
+  });
+
+  const totalExp = staff + transport + ingredients;
+
+  const lines = [
+    `🍱 *NAIROBI DISHES — DAILY SUMMARY*`,
+    `📅 Date: ${date}`,
+    ``,
+    `*👩‍🍳 STAFF & TRANSPORT*`,
+    c1   > 0 ? `  • Cook: KES ${c1.toLocaleString()}` : null,
+    trans> 0 ? `  • Transport: KES ${trans.toLocaleString()}` : null,
+    ``,
+    `*🥩 INGREDIENTS*`,
+    meat   > 0 ? `  • Meat: KES ${meat.toLocaleString()}` : null,
+    rice   > 0 ? `  • Rice: KES ${rice.toLocaleString()}` : null,
+    cab    > 0 ? `  • Cabbage: KES ${cab.toLocaleString()}` : null,
+    veg    > 0 ? `  • Groceries: KES ${veg.toLocaleString()}` : null,
+    dishes > 0 ? `  • Disposable Dishes: KES ${dishes.toLocaleString()}` : null,
+    ``,
+    mealLines.length > 0 ? `*🍱 MEALS*` : null,
+    mealLines.length > 0 ? mealLines.trimEnd() : null,
+    mealLines.length > 0 ? `  Total packed: ${totalPacked} | Ordered: ${totalOrdered}` : null,
+    ``,
+    `*💰 FINANCIALS*`,
+    `  • Total Expenses: KES ${totalExp.toLocaleString()}`,
+    `  • Revenue: KES ${totalRev.toLocaleString()}`,
+    totalRev > 0 ? `  • Net: KES ${(totalRev - totalExp).toLocaleString()}` : null,
+    ``,
+    notes ? `📝 Notes: ${notes}` : null,
+    ``,
+    `_Sent from Nairobi Dishes Tracker_`
+  ].filter(l => l !== null).join('\n');
+
+  window.location.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines)}`;
+}
+
+// ── BULK ──
+const BULK_ITEMS = ['oil','gas','foil','cling','dishes','other'];
+
+function calcBulkUnit(key) {
+  const qty  = parseFloat(document.getElementById(`bulk_qty_${key}`)?.value)  || 0;
+  const paid = parseFloat(document.getElementById(`bulk_paid_${key}`)?.value) || 0;
+  const unit = qty > 0 ? paid / qty : 0;
+  const el = document.getElementById(`bulk_unit_${key}`);
+  if (el) el.innerText = unit > 0 ? `KES ${unit.toFixed(1)}` : '—';
+}
+
+function saveBulk() {
+  const bulk = {};
+  BULK_ITEMS.forEach(key => {
+    const qty  = parseFloat(document.getElementById(`bulk_qty_${key}`)?.value)  || 0;
+    const paid = parseFloat(document.getElementById(`bulk_paid_${key}`)?.value) || 0;
+    if (qty > 0 || paid > 0) bulk[key] = { qty, paid, unitCost: qty > 0 ? paid/qty : 0 };
+  });
+  bulk.notes   = document.getElementById('bulk-notes').value.trim();
+  bulk.updated = new Date().toLocaleString();
+  localStorage.setItem('nd_bulk', JSON.stringify(bulk));
+
+  document.getElementById('bulk-last-updated').innerText = bulk.updated;
+  const info = document.getElementById('bulk-saved-info');
+  info.style.display = 'block';
+  info.innerHTML = `✅ Bulk items saved on ${bulk.updated}`;
+  showToast('Bulk items saved');
+}
+
+function loadBulk() {
+  const bulk = JSON.parse(localStorage.getItem('nd_bulk') || '{}');
+  if (!bulk.updated) return;
+  document.getElementById('bulk-last-updated').innerText = bulk.updated;
+  BULK_ITEMS.forEach(key => {
+    if (bulk[key]) {
+      const qEl = document.getElementById(`bulk_qty_${key}`);
+      const pEl = document.getElementById(`bulk_paid_${key}`);
+      if (qEl) qEl.value = bulk[key].qty;
+      if (pEl) pEl.value = bulk[key].paid;
+      calcBulkUnit(key);
+    }
+  });
+  if (bulk.notes) document.getElementById('bulk-notes').value = bulk.notes;
+  const info = document.getElementById('bulk-saved-info');
+  info.style.display = 'block';
+  info.innerHTML = `Last saved: ${bulk.updated}`;
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.innerText = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
