@@ -128,7 +128,8 @@ header{background:var(--yellow);padding:14px 16px;display:flex;align-items:cente
 .toast.show{opacity:1;}
 
 /* DIVIDER */
-.col-headers,.std-row,.delivery-std{display:none;}
+/* legacy cleanup — intentionally empty */
+
 </style>
 </head>
 <body>
@@ -335,7 +336,8 @@ header{background:var(--yellow);padding:14px 16px;display:flex;align-items:cente
     Enter quantity bought and total paid. Cost per unit calculates automatically.
   </div>
 
-  <div class="sec-label">Last Updated: <span id="bulk-last-updated" style="text-transform:none;letter-spacing:0;font-weight:600;">Never</span></div>
+  <div class="sec-label">Date of Purchase</div>
+  <input type="date" id="bulk-date" class="date-input">
 
   <div class="bulk-group">
     <div class="group-header dark">
@@ -414,8 +416,8 @@ header{background:var(--yellow);padding:14px 16px;display:flex;align-items:cente
   <div class="sec-label">Notes</div>
   <textarea id="bulk-notes" class="exp-textarea" placeholder="e.g. bought 5L oil at Naivas…"></textarea>
 
-  <button class="save-bulk-btn" onclick="saveBulk()">💾 Save Bulk Items</button>
   <div class="bulk-saved-info" id="bulk-saved-info"></div>
+  <button class="wa-btn" style="margin-top:10px;" onclick="sendBulkToWhatsApp()">📲 Send Bulk Summary to WhatsApp</button>
 
 </div>
 
@@ -441,6 +443,7 @@ window.onload = () => {
   const pad = n => String(n).padStart(2,'0');
   const fmt = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
   document.getElementById('entry-date').value = fmt;
+  document.getElementById('bulk-date').value = fmt;
   document.getElementById('today-badge').innerText = fmt;
   renderMeals();
   loadBulk();
@@ -448,11 +451,10 @@ window.onload = () => {
 
 // ── TABS ──
 function switchTab(t) {
-  ['daily','bulk'].forEach(id => {
-    document.getElementById(`tab-${id}`).style.display = t===id ? 'block' : 'none';
-  });
-  document.querySelectorAll('.tab').forEach((el,i) => {
-    el.classList.toggle('active', (i===0&&t==='daily')||(i===1&&t==='bulk'));
+  document.getElementById('tab-daily').style.display = t === 'daily' ? 'block' : 'none';
+  document.getElementById('tab-bulk').style.display  = t === 'bulk'  ? 'block' : 'none';
+  document.querySelectorAll('.tab').forEach((el, i) => {
+    el.classList.toggle('active', (i===0 && t==='daily') || (i===1 && t==='bulk'));
   });
 }
 
@@ -682,28 +684,70 @@ function calcBulkUnit(key) {
   if (el) el.innerText = unit > 0 ? `KES ${unit.toFixed(1)}` : '—';
 }
 
-function saveBulk() {
+function getBulkData() {
   const bulk = {};
   BULK_ITEMS.forEach(key => {
     const qty  = parseFloat(document.getElementById(`bulk_qty_${key}`)?.value)  || 0;
     const paid = parseFloat(document.getElementById(`bulk_paid_${key}`)?.value) || 0;
     if (qty > 0 || paid > 0) bulk[key] = { qty, paid, unitCost: qty > 0 ? paid/qty : 0 };
   });
+  bulk.date    = document.getElementById('bulk-date').value;
   bulk.notes   = document.getElementById('bulk-notes').value.trim();
   bulk.updated = new Date().toLocaleString();
-  localStorage.setItem('nd_bulk', JSON.stringify(bulk));
+  return bulk;
+}
 
-  document.getElementById('bulk-last-updated').innerText = bulk.updated;
+function saveBulk(bulk) {
+  bulk = bulk || getBulkData();
+  localStorage.setItem('nd_bulk', JSON.stringify(bulk));
   const info = document.getElementById('bulk-saved-info');
   info.style.display = 'block';
-  info.innerHTML = `✅ Bulk items saved on ${bulk.updated}`;
+  info.innerHTML = `✅ Saved · ${bulk.date || bulk.updated}`;
   showToast('Bulk items saved');
 }
 
+function sendBulkToWhatsApp() {
+  const bulk = getBulkData();
+  saveBulk(bulk); // auto-save before sending
+
+  const LABELS = {
+    oil:'Oil (litres)', gas:'Gas (kg)', foil:'Foil (metres)',
+    cling:'Cling Film (metres)', dishes:'Disposable Dishes', other:'Other'
+  };
+  const UNITS = { oil:'L', gas:'kg', foil:'m', cling:'m', dishes:'pcs', other:'' };
+
+  let totalSpent = 0;
+  const itemLines = BULK_ITEMS
+    .filter(k => bulk[k])
+    .map(k => {
+      const b = bulk[k];
+      totalSpent += b.paid;
+      const unit = UNITS[k] ? `${b.qty}${UNITS[k]}` : `qty ${b.qty}`;
+      return `  • ${LABELS[k]}: ${unit} → KES ${b.paid.toLocaleString()} (KES ${b.unitCost.toFixed(1)} per unit)`;
+    });
+
+  if (itemLines.length === 0) {
+    showToast('No bulk items entered');
+    return;
+  }
+
+  const msg = ['📦 *NAIROBI DISHES — BULK PURCHASE*', '📅 Date: ' + (bulk.date || '—'), '', '*Items Purchased:*', ...itemLines, '', '*Total Spent: KES ' + totalSpent.toLocaleString() + '*', bulk.notes ? '📝 Notes: ' + bulk.notes : null, '', '_Sent from Nairobi Dishes Tracker_'].filter(l => l !== null).join('\n');
+  const lines = msg;
+
+  window.location.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines)}`;
+}
+
 function loadBulk() {
+  // Set today's date on bulk tab
+  const today = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const fmt = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+  const bd = document.getElementById('bulk-date');
+  if (bd) bd.value = fmt;
+
   const bulk = JSON.parse(localStorage.getItem('nd_bulk') || '{}');
   if (!bulk.updated) return;
-  document.getElementById('bulk-last-updated').innerText = bulk.updated;
+  if (bulk.date) document.getElementById('bulk-date').value = bulk.date;
   BULK_ITEMS.forEach(key => {
     if (bulk[key]) {
       const qEl = document.getElementById(`bulk_qty_${key}`);
@@ -716,7 +760,7 @@ function loadBulk() {
   if (bulk.notes) document.getElementById('bulk-notes').value = bulk.notes;
   const info = document.getElementById('bulk-saved-info');
   info.style.display = 'block';
-  info.innerHTML = `Last saved: ${bulk.updated}`;
+  info.innerHTML = `Last saved: ${bulk.date || bulk.updated}`;
 }
 
 // ── TOAST ──
