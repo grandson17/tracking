@@ -266,13 +266,26 @@ header{background:var(--yellow);padding:14px 16px;display:flex;align-items:cente
 
     <div class="expense-item amount-only">
       <div class="expense-item-top">
+        <div class="expense-name">Chapo<small>total amount spent</small></div>
+        <div class="row-total" id="total_chapo">—</div>
+      </div>
+      <div class="input-row">
+        <div class="input-group">
+          <span class="input-label">Amount (KES)</span>
+          <input class="exp-input" type="number" placeholder="0" id="price_chapo" oninput="calcSimple('chapo')" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+
+    <div class="expense-item amount-only">
+      <div class="expense-item-top">
         <div class="expense-name">Disposable Dishes<small>cost per dish · qty = total packed</small></div>
         <div class="row-total" id="total_dishes">—</div>
       </div>
       <div class="input-row">
         <div class="input-group">
           <span class="input-label">Cost per dish (KES)</span>
-          <input class="exp-input" type="number" placeholder="0" id="price_dishes" oninput="calcSimple('dishes')" inputmode="decimal">
+          <input class="exp-input" type="number" placeholder="0" value="15" id="price_dishes" oninput="calcSimple('dishes')" inputmode="decimal">
         </div>
       </div>
     </div>
@@ -338,6 +351,10 @@ header{background:var(--yellow);padding:14px 16px;display:flex;align-items:cente
 
   <div class="sec-label">Date of Purchase</div>
   <input type="date" id="bulk-date" class="date-input">
+
+  <div class="sec-label">Date of Entry</div>
+  <input type="date" id="bulk-date" class="date-input">
+
 
   <div class="bulk-group">
     <div class="group-header dark">
@@ -432,7 +449,7 @@ const DEFAULT_MEALS = [
   { name: "Chapo Cereals",    price: 120 },
   { name: "Rice (S)",         price: 100 },
   { name: "Rice Cereals",     price: 150 },
-  { name: "Mashed Potatoes",  price: 150 },
+  { name: "Weekly Meals",     price: 150 },
 ];
 
 let customMeals = []; // extra user-added meals
@@ -590,7 +607,7 @@ function getDishesTotal() {
 function updateSummary() {
   const staff       = getVal('cook1');
   const transport   = getVal('transport');
-  const ingredients = getSimple('meat') + getVal('rice') + getVal('cabbage') + getSimple('veg') + getDishesTotal();
+  const ingredients = getSimple('meat') + getVal('rice') + getVal('cabbage') + getSimple('veg') + getSimple('chapo') + getDishesTotal();
 
   const meals = allMeals();
   let totalPacked = 0, totalOrdered = 0, totalRev = 0;
@@ -618,12 +635,12 @@ function sendToWhatsApp() {
   const notes      = document.getElementById('entry-notes').value.trim();
   const staff       = getVal('cook1');
   const transport   = getVal('transport');
-  const ingredients = getSimple('meat') + getVal('rice') + getVal('cabbage') + getSimple('veg') + getDishesTotal();
+  const ingredients = getSimple('meat') + getVal('rice') + getVal('cabbage') + getSimple('veg') + getSimple('chapo') + getDishesTotal();
 
   const c1    = getVal('cook1');
   const trans = getVal('transport');
   const meat  = getSimple('meat'), rice = getVal('rice');
-  const cab   = getVal('cabbage'), veg = getSimple('veg'), dishes = getDishesTotal();
+  const cab   = getVal('cabbage'), veg = getSimple('veg'), chapo = getSimple('chapo'), dishes = getDishesTotal();
 
   const meals = allMeals();
   let mealLines = '', totalPacked = 0, totalOrdered = 0, totalRev = 0;
@@ -654,6 +671,7 @@ function sendToWhatsApp() {
     rice   > 0 ? `  • Rice: KES ${rice.toLocaleString()}` : null,
     cab    > 0 ? `  • Cabbage: KES ${cab.toLocaleString()}` : null,
     veg    > 0 ? `  • Groceries: KES ${veg.toLocaleString()}` : null,
+    chapo  > 0 ? `  • Chapo: KES ${chapo.toLocaleString()}` : null,
     dishes > 0 ? `  • Disposable Dishes: KES ${dishes.toLocaleString()}` : null,
     ``,
     mealLines.length > 0 ? `*🍱 MEALS*` : null,
